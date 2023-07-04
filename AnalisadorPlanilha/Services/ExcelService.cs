@@ -16,12 +16,12 @@ namespace AnalisadorPlanilha.Services
                                           string colunasEventos,
                                           string planilhaEventos)
         {
-            Validar(diretorioDestinatarios, colunasEmails, diretorioEventos, colunasEventos);
+            Validar(diretorioDestinatarios, colunasEmails, planilhaDestinatarios, diretorioEventos, colunasEventos, planilhaEventos);
 
             string[] colEmails = GetColunas(colunasEmails);
             string[] colEventos = GetColunas(colunasEventos);
 
-            LerExcel(diretorioDestinatarios, colEmails);
+            LerExcel(diretorioDestinatarios, colEmails, planilhaDestinatarios);
         }
 
         private static string[] GetColunas(string coluna)
@@ -56,7 +56,8 @@ namespace AnalisadorPlanilha.Services
         }
 
         private static void LerExcel(string diretorio,
-                                     string[] colunas)
+                                     string[] colunas,
+                                     string planilha)
         {
             if (!File.Exists(diretorio))
             {
@@ -66,7 +67,38 @@ namespace AnalisadorPlanilha.Services
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             using (var package = new ExcelPackage(diretorio))
             {
+                using (var sheet = package.Workbook.Worksheets[planilha])
+                {
+                    IDictionary<string, int> indiceColunas = GetColumnIndex(colunas, sheet);
+                }
+            }
+        }
 
+        private static IDictionary<string, int> GetColumnIndex(string[] colunas, ExcelWorksheet sheet)
+        {
+            try
+            {
+                IDictionary<string, int> keyValuePairs = new Dictionary<string, int>();
+
+                int ultimaColuna = sheet.Dimension.End.Column;
+
+                foreach (var coluna in colunas)
+                {
+                    for (int i = 1; i <= ultimaColuna; i++)
+                    {
+                        if ((sheet.Cells[1, i].Value + "").ToLower().Trim() == coluna.ToLower().Trim())
+                        {
+                            keyValuePairs.Add(coluna, i);
+                            break;
+                        }
+                    }
+                }
+
+                return keyValuePairs;
+            }
+            catch (Exception)
+            {
+                throw;
             }
         }
     }
